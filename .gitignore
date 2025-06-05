@@ -1,0 +1,5 @@
+.env
+node_modules
+events.db
+.vscode
+sessions.sqlite
