@@ -1,4 +1,4 @@
-# 1A75.org 🚁 ![GitHub Repo stars](https://img.shields.io/github/stars/your-username/repo-name?style=social)
+# 1A75.org 🚁 ![GitHub Repo stars](https://img.shields.io/github/stars/a3-us-army/1A-75th-Utils?style=social)
 
 Welcome to the official repository for [1A75.org](https://1a75.org) — a fast, lightweight web portal for the 1st Battalion, 75th Aviation Regiment. This site provides essential information, tools, and resources for unit members and visitors.
 
