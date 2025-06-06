@@ -85,7 +85,7 @@ export function setupFullLogger(client) {
 			.addFields(
 				{
 					name: "User",
-					value: `${member.username} (<@${member.id}>)`,
+					value: `${member.tag} (<@${member.id}>)`,
 					inline: true,
 				},
 				{ name: "User ID", value: member.id, inline: true },
@@ -935,42 +935,56 @@ export function setupFullLogger(client) {
 
 	// --- User Update (username, avatar, banner) ---
 	const GUILD_ID = process.env.GUILD_ID;
-	client.on("userUpdate", async (oldUser, newUser) => {
-		const guild = client.guilds.cache.get(GUILD_ID);
-		if (!guild) return;
-		const channel = await getLogChannel(guild);
-		if (!channel) return;
-		const changes = [];
-		if (oldUser.username !== newUser.username) {
-			changes.push({
-				name: "Username",
-				value: `\`${oldUser.username}\` → \`${newUser.username}\``,
-				inline: false,
-			});
-		}
-		if (oldUser.avatar !== newUser.avatar) {
-			changes.push({
-				name: "Avatar Changed",
-				value: `[Old Avatar](${oldUser.displayAvatarURL()}) → [New Avatar](${newUser.displayAvatarURL()})`,
-				inline: false,
-			});
-		}
-		if (oldUser.banner !== newUser.banner) {
-			changes.push({
-				name: "Banner Changed",
-				value: `[Old Banner](${oldUser.bannerURL() || "N/A"}) → [New Banner](${newUser.bannerURL() || "N/A"})`,
-				inline: false,
-			});
-		}
-		if (changes.length === 0) return;
-		const embed = new EmbedBuilder()
-			.setColor(0x3498db)
-			.setTitle("User Updated")
-			.setDescription(`<@${newUser.id}>`)
-			.addFields(...changes)
-			.setTimestamp();
-		await channel.send({ embeds: [embed] });
-	});
+
+client.on("userUpdate", async (oldUser, newUser) => {
+	const guild = client.guilds.cache.get(GUILD_ID);
+	if (!guild) return;
+
+	// Check if the user is a member of the guild
+	let member;
+	try {
+		member = await guild.members.fetch(newUser.id);
+	} catch {
+		member = null;
+	}
+	if (!member) return; // User is not in the guild
+
+	const channel = await getLogChannel(guild);
+	if (!channel) return;
+
+	const changes = [];
+	if (oldUser.username !== newUser.username) {
+		changes.push({
+			name: "Username",
+			value: `\`${oldUser.username}\` → \`${newUser.username}\``,
+			inline: false,
+		});
+	}
+	if (oldUser.avatar !== newUser.avatar) {
+		changes.push({
+			name: "Avatar Changed",
+			value: `[Old Avatar](${oldUser.displayAvatarURL()}) → [New Avatar](${newUser.displayAvatarURL()})`,
+			inline: false,
+		});
+	}
+	if (oldUser.banner !== newUser.banner) {
+		changes.push({
+			name: "Banner Changed",
+			value: `[Old Banner](${oldUser.bannerURL() || "N/A"}) → [New Banner](${newUser.bannerURL() || "N/A"})`,
+			inline: false,
+		});
+	}
+	if (changes.length === 0) return;
+
+	const embed = new EmbedBuilder()
+		.setColor(0x3498db)
+		.setTitle("User Updated")
+		.setDescription(`<@${newUser.id}>`)
+		.addFields(...changes)
+		.setTimestamp();
+
+	await channel.send({ embeds: [embed] });
+});
 
 	// --- Guild Update ---
 	client.on("guildUpdate", async (oldGuild, newGuild) => {

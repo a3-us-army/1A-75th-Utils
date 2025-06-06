@@ -19,25 +19,36 @@ export async function execute(interaction) {
 	const user = interaction.options.getUser("user");
 	const reason =
 		interaction.options.getString("reason") || "No reason provided";
-	const member = await interaction.guild.members
-		.fetch(user.id)
-		.catch(() => null);
+	let member;
+	try {
+		member = await interaction.guild.members.fetch(user.id);
+	} catch {
+		member = null;
+	}
 
-	if (!member) {
-		const embed = new EmbedBuilder()
-			.setColor(0xe74c3c)
-			.setTitle("Ban Failed")
-			.setDescription("User not found.");
-		return interaction.reply({ embeds: [embed], ephemeral: true });
+	// If the user is in the server
+	if (member) {
+		if (!member.bannable) {
+			const embed = new EmbedBuilder()
+				.setColor(0xe74c3c)
+				.setTitle("Ban Failed")
+				.setDescription("I can't ban this user.");
+			return interaction.reply({ embeds: [embed], ephemeral: true });
+		}
+		await member.ban({ reason });
+	} else {
+		// User not in the server, ban by ID
+		try {
+			await interaction.guild.bans.create(user.id, { reason });
+		} catch (err) {
+			const embed = new EmbedBuilder()
+				.setColor(0xe74c3c)
+				.setTitle("Ban Failed")
+				.setDescription("Failed to ban user. They may already be banned or the ID is invalid.");
+			return interaction.reply({ embeds: [embed], ephemeral: true });
+		}
 	}
-	if (!member.bannable) {
-		const embed = new EmbedBuilder()
-			.setColor(0xe74c3c)
-			.setTitle("Ban Failed")
-			.setDescription("I can't ban this user.");
-		return interaction.reply({ embeds: [embed], ephemeral: true });
-	}
-	await member.ban({ reason });
+
 	const embed = new EmbedBuilder()
 		.setColor(0xc0392b)
 		.setTitle("User Banned")

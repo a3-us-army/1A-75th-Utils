@@ -1,10 +1,9 @@
 import { Router } from "express";
 import ensureAdmin from "../middleware/ensureAdmin.js";
-import ensureAuth from "../middleware/ensureAuth.js";
 import { getDatabase } from "../../bot/utils/database.js";
-import { fetchDiscordAvatar } from "../utils/discord.js";
-const router = Router();
+import fetchDiscordAvatar from "../utils/fetchDiscordAvatar.js"; // adjust path as needed
 
+const router = Router();
 const db = getDatabase();
 
 router.get("/", async (req, res) => {
@@ -52,14 +51,19 @@ router.post("/api/personnel/add", ensureAdmin, async (req, res) => {
 		platoon,
 	} = req.body;
 
+	// Find the current max sort_order for this squad+platoon
+	const maxSortOrder = db.prepare(
+		`SELECT MAX(sort_order) as max FROM personnel WHERE squad = ? AND platoon = ?`
+	).get(squad, platoon).max || 0;
+
 	// Fetch avatar
 	const botToken = process.env.DISCORD_TOKEN;
 	const discord_avatar = await fetchDiscordAvatar(discord_id, botToken);
 
 	db.prepare(
 		`
-    INSERT INTO personnel (discord_id, discord_username, name, position, callsign, role, status, squad, platoon, discord_avatar)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO personnel (discord_id, discord_username, name, position, callsign, role, status, squad, platoon, discord_avatar, sort_order)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `,
 	).run(
 		discord_id,
@@ -72,6 +76,7 @@ router.post("/api/personnel/add", ensureAdmin, async (req, res) => {
 		squad,
 		platoon,
 		discord_avatar,
+		maxSortOrder + 1
 	);
 	res.json({ success: true });
 });

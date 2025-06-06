@@ -160,7 +160,12 @@ client.on("interactionCreate", async (interaction) => {
 					"./handlers/buttonHandler.js"
 				);
 				await handleModalSubmit(interaction);
-			}
+			} else if (interaction.customId.startsWith("app_approve_modal_")) {
+                const { handleApplicationButton } = await import(
+                  "./handlers/applicationButtonHandler.js"
+                );
+                await handleApplicationButton(interaction);
+              }
 		} catch (error) {
 			console.error("Error handling modal submit:", error);
 			if (!interaction.replied && !interaction.deferred) {
